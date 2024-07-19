@@ -2,7 +2,7 @@ library new_version_plus;
 
 import 'dart:convert';
 import 'dart:io';
-
+import 'package:flutter/foundation.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -133,9 +133,9 @@ class NewVersionPlus {
   /// way.
   Future<VersionStatus?> getVersionStatus() async {
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
-    if (Platform.isIOS) {
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
       return _getiOSStoreVersion(packageInfo);
-    } else if (Platform.isAndroid) {
+    } else if (defaultTargetPlatform == TargetPlatform.android) {
       return _getAndroidStoreVersion(packageInfo);
     } else {
       debugPrint(
@@ -173,7 +173,7 @@ class NewVersionPlus {
     return VersionStatus._(
       localVersion: _getCleanVersion(packageInfo.version),
       storeVersion:
-          _getCleanVersion(forceAppVersion ?? jsonObj['results'][0]['version']),
+      _getCleanVersion(forceAppVersion ?? jsonObj['results'][0]['version']),
       originalStoreVersion: forceAppVersion ?? jsonObj['results'][0]['version'],
       appStoreLink: jsonObj['results'][0]['trackViewUrl'],
       releaseNotes: jsonObj['results'][0]['releaseNotes'],
@@ -193,7 +193,7 @@ class NewVersionPlus {
     // Supports 1.2.3 (most of the apps) and 1.2.prod.3 (e.g. Google Cloud)
     //final regexp = RegExp(r'\[\[\["(\d+\.\d+(\.[a-z]+)?\.\d+)"\]\]');
     final regexp =
-        RegExp(r'\[\[\[\"(\d+\.\d+(\.[a-z]+)?(\.([^"]|\\")*)?)\"\]\]');
+    RegExp(r'\[\[\[\"(\d+\.\d+(\.[a-z]+)?(\.([^"]|\\")*)?)\"\]\]');
     final storeVersion = regexp.firstMatch(response.body)?.group(1);
 
     //Description
@@ -201,13 +201,13 @@ class NewVersionPlus {
 
     //Release
     final regexpRelease =
-        RegExp(r'\[(null,)\[(null,)\"((\.[a-z]+)?(([^"]|\\")*)?)\"\]\]');
+    RegExp(r'\[(null,)\[(null,)\"((\.[a-z]+)?(([^"]|\\")*)?)\"\]\]');
 
     final expRemoveSc = RegExp(r"\\u003c[A-Za-z]{1,10}\\u003e",
         multiLine: true, caseSensitive: true);
 
     final expRemoveQuote =
-        RegExp(r"\\u0026quot;", multiLine: true, caseSensitive: true);
+    RegExp(r"\\u0026quot;", multiLine: true, caseSensitive: true);
 
     final releaseNotes = regexpRelease.firstMatch(response.body)?.group(3);
     //final descriptionNotes = regexpDescription.firstMatch(response.body)?.group(2);
@@ -220,8 +220,8 @@ class NewVersionPlus {
       releaseNotes: androidHtmlReleaseNotes
           ? _parseUnicodeToString(releaseNotes)
           : releaseNotes
-              ?.replaceAll(expRemoveSc, '')
-              .replaceAll(expRemoveQuote, '"'),
+          ?.replaceAll(expRemoveSc, '')
+          .replaceAll(expRemoveQuote, '"'),
     );
   }
 
@@ -272,41 +272,41 @@ class NewVersionPlus {
     final updateButtonTextWidget = Text(updateButtonText);
 
     List<Widget> actions = [
-      Platform.isAndroid
+      defaultTargetPlatform == TargetPlatform.android
           ? TextButton(
-              onPressed: () => _updateActionFunc(
-                allowDismissal: allowDismissal,
-                context: context,
-                appStoreLink: versionStatus.appStoreLink,
-                launchMode: launchMode,
-              ),
-              child: updateButtonTextWidget,
-            )
+        onPressed: () => _updateActionFunc(
+          allowDismissal: allowDismissal,
+          context: context,
+          appStoreLink: versionStatus.appStoreLink,
+          launchMode: launchMode,
+        ),
+        child: updateButtonTextWidget,
+      )
           : CupertinoDialogAction(
-              onPressed: () => _updateActionFunc(
-                allowDismissal: allowDismissal,
-                context: context,
-                appStoreLink: versionStatus.appStoreLink,
-                launchMode: launchMode,
-              ),
-              child: updateButtonTextWidget,
-            ),
+        onPressed: () => _updateActionFunc(
+          allowDismissal: allowDismissal,
+          context: context,
+          appStoreLink: versionStatus.appStoreLink,
+          launchMode: launchMode,
+        ),
+        child: updateButtonTextWidget,
+      ),
     ];
 
     if (allowDismissal) {
       final dismissButtonTextWidget = Text(dismissButtonText);
       dismissAction = dismissAction ??
-          () => Navigator.of(context, rootNavigator: true).pop();
+              () => Navigator.of(context, rootNavigator: true).pop();
       actions.add(
-        Platform.isAndroid
+        defaultTargetPlatform == TargetPlatform.android
             ? TextButton(
-                onPressed: dismissAction,
-                child: dismissButtonTextWidget,
-              )
+          onPressed: dismissAction,
+          child: dismissButtonTextWidget,
+        )
             : CupertinoDialogAction(
-                onPressed: dismissAction,
-                child: dismissButtonTextWidget,
-              ),
+          onPressed: dismissAction,
+          child: dismissButtonTextWidget,
+        ),
       );
     }
 
@@ -315,17 +315,17 @@ class NewVersionPlus {
       barrierDismissible: allowDismissal,
       builder: (BuildContext context) {
         return WillPopScope(
-            child: Platform.isAndroid
+            child: defaultTargetPlatform == TargetPlatform.android
                 ? AlertDialog(
-                    title: dialogTitleWidget,
-                    content: dialogTextWidget,
-                    actions: actions,
-                  )
+              title: dialogTitleWidget,
+              content: dialogTextWidget,
+              actions: actions,
+            )
                 : CupertinoAlertDialog(
-                    title: dialogTitleWidget,
-                    content: dialogTextWidget,
-                    actions: actions,
-                  ),
+              title: dialogTitleWidget,
+              content: dialogTextWidget,
+              actions: actions,
+            ),
             onWillPop: () => Future.value(allowDismissal));
       },
     );
@@ -333,9 +333,9 @@ class NewVersionPlus {
 
   /// Launches the Apple App Store or Google Play Store page for the app.
   Future<void> launchAppStore(
-    String appStoreLink, {
-    LaunchMode launchMode = LaunchMode.platformDefault,
-  }) async {
+      String appStoreLink, {
+        LaunchMode launchMode = LaunchMode.platformDefault,
+      }) async {
     if (await canLaunchUrl(Uri.parse(appStoreLink))) {
       await launchUrl(
         Uri.parse(appStoreLink),
